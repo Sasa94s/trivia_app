@@ -1,3 +1,4 @@
+import math
 import os
 from builtins import int
 
@@ -49,6 +50,8 @@ def create_app(test_config=None):
         '''
         page = request.args.get('page', 1, type=int)
         categories = [category.id for category in Category.query.with_entities(Category.id)]
+        if category_id not in categories:
+            abort(404)
 
         start, stop = paginate(QUESTIONS_PER_PAGE, page)
         questions = Question.query.filter(Question.category == category_id).slice(start, stop).all()
@@ -112,10 +115,14 @@ def create_app(test_config=None):
         categories = [category.id for category in Category.query.with_entities(Category.id)]
         current_category = request.args.get('category', 0, type=int)
 
+        total_questions = Question.query.count()
+
+        if math.ceil(total_questions / QUESTIONS_PER_PAGE) < page:
+            abort(404)
+
         start, stop = paginate(QUESTIONS_PER_PAGE, page)
         questions = Question.query.slice(start, stop).all()
 
-        total_questions = Question.query.count()
         return jsonify({
             'questions': [question.format() for question in questions],
             'total_questions': total_questions,
@@ -130,13 +137,14 @@ def create_app(test_config=None):
         Create an endpoint to DELETE question using a question ID.
         '''
         question = Question.query.filter(Question.id == question_id).one_or_none()
-        status = False
-        if question:
-            Question.delete(question)
-            status = True
+
+        if not question:
+            abort(404)
+
+        Question.delete(question)
         return jsonify({
             'deleted': question.id,
-            'success': status
+            'success': True
         })
 
 
@@ -152,7 +160,7 @@ def create_app(test_config=None):
         previous_questions = body.get('previous_questions', [])
         quiz_category = body.get('quiz_category', None)
 
-        if not quiz_category:
+        if not quiz_category or 'id' not in quiz_category:
             abort(400)
 
         category_id = int(quiz_category['id'])
