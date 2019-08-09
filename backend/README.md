@@ -33,7 +33,10 @@ This will install all of the required packages we selected within the `requireme
 ## Database Setup
 With Postgres running, restore a database using the trivia.psql file provided. From the backend folder in terminal run:
 ```bash
-psql trivia < trivia.psql
+$ psql -U postgres
+postgres=# create database trivia_test;
+postgres=# \q
+$ psql -d trivia_test -U postgres -f backend/trivia.psql
 ```
 
 ## Running the server
@@ -50,8 +53,6 @@ The `--reload` flag will detect file changes and restart the server automaticall
 
 ## Tasks
 
-One note before you delve into your tasks: for each endpoint you are expected to define the endpoint and response data. The frontend will be a plentiful resource because it is set up to expect certain endpoints and response data formats already. You should feel free to specify endpoints in your own way; if you do so, make sure to update the frontend or you will get some unexpected behavior. 
-
 1. Use Flask-CORS to enable cross-domain requests and set response headers. 
 2. Create an endpoint to handle GET requests for questions, including pagination (every 10 questions). This endpoint should return a list of questions, number of total questions, current category, categories. 
 3. Create an endpoint to handle GET requests for all available categories. 
@@ -62,35 +63,156 @@ One note before you delve into your tasks: for each endpoint you are expected to
 8. Create a POST endpoint to get questions to play the quiz. This endpoint should take category and previous question parameters and return a random questions within the given category, if provided, and that is not one of the previous questions. 
 9. Create error handlers for all expected errors including 400, 404, 422 and 500. 
 
-REVIEW_COMMENT
-```
-This README is missing documentation of your endpoints. Below is an example for your endpoint to get all categories. Please use it as a reference for creating your documentation and resubmit your code. 
+## Endpoints
 
-Endpoints
-GET '/categories'
-GET ...
-POST ...
-DELETE ...
+1. `GET '/api/categories'`
+2. `GET '/api/categories/<int:category_id>/questions'`
+3. `GET '/api/questions'`
+4. `POST '/api/questions'`
+5. `DELETE '/api/questions/<int:question_id>'`
+6. `POST '/api/quizzes'`
 
-GET '/categories'
-- Fetches a dictionary of categories in which the keys are the ids and the value is the corresponding string of the category
-- Request Arguments: None
-- Returns: An object with a single key, categories, that contains a object of id: category_string key:value pairs. 
-{'1' : "Science",
-'2' : "Art",
-'3' : "Geography",
-'4' : "History",
-'5' : "Entertainment",
-'6' : "Sports"}
-
-```
-
+### API Documentation
+1. `GET '/api/categories'` -- Gets all available categories
+    - Request Body: None
+    - Response Body:
+        ```
+        {
+            "categories": [1,2,3,4,5,6],
+            "success": true
+        }      
+        ```
+2. `GET '/api/categories/<int:category_id>/questions'` -- Gets all questions based on category
+    - Request Body: None
+    - Response Body:
+    ```
+   {
+        "categories": [1,2,3,4,5,6],
+        "current_category": 1,
+        "questions": [
+            {
+                "answer": "The Liver",
+                "category": 1,
+                "difficulty": 4,
+                "id": 20,
+                "question": "What is the heaviest organ in the human body?"
+            },
+            ...
+        ],
+        "total_questions": 21
+    }
+    ```
+3. `GET '/api/questions'` -- Gets all questions with pagination
+    - Request Body: None
+    - Query String Parameters:
+        - `page`: integer -- number of requested page
+        - `category`: integer -- number of requested category, if value equals `zero` then it will fetch by all categories
+    - Response Body:
+    ```
+   {
+        "categories": [1,2,3,4,5,6],
+        "current_category": 0,
+        "questions": [
+            {
+                "answer": "Maya Angelou",
+                "category": 4,
+                "difficulty": 2,
+                "id": 5,
+                "question": "Whose autobiography is entitled 'I Know Why the Caged Bird Sings'?"
+            },
+            ...
+        ],
+        "total_questions": 21
+    }
+   ```
+4. `POST '/api/questions'` -- Creates a new question
+    
+    - Request Body:
+    ```
+    { 
+       "question":"Whats your name?",
+       "answer":"Mostafa",
+       "difficulty":1,
+       "category":1
+    }
+    ```
+    - Response Body:
+    ```
+    {
+        "question": 33,
+        "success": true
+    }
+    ```
+     `POST '/api/questions'` -- Gets all available questions based on search term
+    
+    - Request Body:
+    ```
+    { 
+       "searchTerm":"name"
+    }
+    ```
+    - Response Body:
+    ```{
+    "categories": [1,2,3,4,5,6],
+        "current_category": [4,6,1],
+        "questions": [
+            {
+                "answer": "Muhammad Ali",
+                "category": 4,
+                "difficulty": 1,
+                "id": 9,
+                "question": "What boxer's original name is Cassius Clay?"
+            },
+            ...
+        ],
+        "success": true,
+        "total_questions": 3
+    }
+    ```
+5. `DELETE '/api/questions/<int:question_id>'` -- Deletes question by ID
+    
+    - Request Body: None
+    - Response Body:
+    ```
+    {
+        "deleted": 10,
+        "success": true
+    }
+    ```
+6. `POST '/api/quizzes'` -- Gets random question to play the quiz
+    
+    - Request Body: 
+    ```
+    { 
+       "previous_questions":[ 
+    
+       ],
+       "quiz_category":{ 
+          "type":"click",
+          "id":2
+       }
+    }
+    ```
+    - Response Body:
+    ```
+    {
+        "question": {
+            "answer": "Escher",
+            "category": 2,
+            "difficulty": 1,
+            "id": 16,
+            "question": "Which Dutch graphic artist–initials M C was a creator of optical illusions?"
+        }
+    }
+    ```
 
 ## Testing
 To run the tests, run
 ```
-dropdb trivia_test
-createdb trivia_test
-psql trivia_test < trivia.psql
-python test_flaskr.py
+$ psql -U postgres
+postgres=# drop database trivia_test;
+postgres=# create database trivia_test;
+postgres=# \q
+$ psql -d trivia_test -U postgres -f backend/trivia.psql
+$ python test_flaskr.py
 ```
